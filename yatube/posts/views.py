@@ -17,7 +17,8 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    posts = Post.objects.select_related('author')
+    # posts = Post.objects.select_related('author')
+    posts = group.posts.all()
     page_obj = get_page(request, posts)
     context = {
         'group': group,
@@ -116,7 +117,9 @@ def add_comment(request, post_id):
 def follow_index(request):
     template = 'posts/follow.html'
     title = 'Лента моих подписок'
-    post = Post.objects.filter(author__following__user=request.user)
+    post = Post.objects.select_related(
+        'author'
+    ).filter(author__following__user=request.user)
     page_obj = get_page(request, post)
     context = {
         'title': title,

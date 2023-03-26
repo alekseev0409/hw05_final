@@ -7,13 +7,10 @@ from django.core.cache import cache
 
 
 class PostTests(TestCase):
-    def get_info(self, post, post_2):
-        post_text = post.text
-        post_author = post.author.username
-        group_post = post.group.title
-        self.assertEqual(post_text, post_2.text)
-        self.assertEqual(post_author, post_2.author.username)
-        self.assertEqual(group_post, post_2.group.title)
+    def check_info(self, post):
+        self.assertEqual(post.text, self.post.text)
+        self.assertEqual(post.author.username, self.post.author.username)
+        self.assertEqual(post.group.title, self.post.group.title)
 
     @classmethod
     def setUpClass(cls):
@@ -70,7 +67,7 @@ class PostTests(TestCase):
     def test_home_page_show_correct_context(self):
         """Шаблон главной страницы сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
-        self.get_info(response.context.get('page_obj')[0], self.post)
+        self.check_info(response.context.get('page_obj')[0])
 
     def test_group_list_page_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
@@ -84,19 +81,19 @@ class PostTests(TestCase):
         self.assertEqual(group_title, self.group.title)
         self.assertEqual(group_description, self.group.description)
         self.assertEqual(group_slug, self.group.slug)
-        self.get_info(response.context.get('page_obj')[0], self.post)
+        self.check_info(response.context.get('page_obj')[0])
 
     def test_profile_page_show_correct_context(self):
         """Шаблон profile сформирован с правильным контекстом."""
         url = reverse('posts:profile', kwargs={'username': PostTests.author})
         response = self.authorized_client_author.get(url)
-        self.get_info(response.context.get('page_obj')[0], self.post)
+        self.check_info(response.context.get('page_obj')[0])
 
     def test_post_detail_pages_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
         url = reverse('posts:post_detail', kwargs={'post_id': self.post.pk})
         response = self.authorized_client_author.get(url)
-        self.get_info(response.context.get('post'), self.post)
+        self.check_info(response.context.get('post'))
 
     def test_create_post_edit_show_correct_context(self):
         """Шаблон редактирования поста create_post сформирован
@@ -227,6 +224,14 @@ class FollowingViewsTest(TestCase):
             author=cls.user_2,
             text='Тестовый текст',
         )
+        cls.post_2 = Post.objects.create(
+            author=cls.user_1,
+            text='Тестовый текст 2',
+        )
+        cls.follow = Follow.objects.create(
+            user=cls.user_2,
+            author=cls.user_1
+        )
 
     def setUp(self):
         self.authorized_client_1 = Client()
@@ -245,11 +250,13 @@ class FollowingViewsTest(TestCase):
         self.assertEqual(user_following_count, 1)
         self.assertEqual(self.user_1.id, follower.user.id)
         self.assertEqual(self.user_2.id, follower.author.id)
-        self.authorized_client_1.get(reverse(
+
+    def test_unfollow(self):
+        self.authorized_client_2.get(reverse(
             'posts:profile_unfollow',
-            kwargs={'username': self.user_2.username}),
+            kwargs={'username': self.user_1.username}),
         )
-        user_unfollowing_count = self.user_1.follower.count()
+        user_unfollowing_count = self.user_2.follower.count()
         self.assertEqual(user_unfollowing_count, 0)
 
     def test_folowing_post(self):

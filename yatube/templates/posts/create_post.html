@@ -13,11 +13,12 @@
               {% endif %}    
               </div>
               <div class="card-body">
-                 {% if is_edit %}
-                    <form method="post" action="{% url 'posts:post_edit' form.instance.pk %}" enctype="multipart/form-data">
-                  {% else %}
-                      <form method="post" action="{% url 'posts:create' %}" enctype="multipart/form-data">
-                  {% endif %}
+
+                    <form method="post" {% if is_edit %} action="{% url 'posts:post_edit' form.instance.pk %}" enctype="multipart/form-data">
+                       {% else %}
+                      action="{% url 'posts:create' %}"  {% endif %}
+                    enctype="multipart/form-data">
+
                   {% load user_filters %}
                   {% csrf_token %}
                   <input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}">            
