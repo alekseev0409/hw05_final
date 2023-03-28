@@ -146,6 +146,17 @@ class PostTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': self.group.slug}))
         self.assertIn(self.post, response.context['page_obj'])
 
+    def test_cache(self):
+        "Тестирование кеша страницы index"
+        response = self.client.get('posts:index')
+        content = response.content
+        Post.objects.all().delete()
+        response = self.client.get('posts:index')
+        self.assertEqual(response.content, content)
+        cache.clear()
+        response = self.client.get(reverse('posts:index'))
+        self.assertNotEqual(response.content, content)
+
 
 class PaginatorViewsTest(TestCase):
     @classmethod
@@ -201,17 +212,6 @@ class PaginatorViewsTest(TestCase):
             response = self.client.get(url)
             amount_posts = len(response.context.get('page_obj').object_list)
             self.assertEqual(amount_posts, settings.LEN_PAGE_OBJ)
-
-    def test_cache(self):
-        "Тестирование кеша страницы index"
-        response = self.client.get('posts:index')
-        content = response.content
-        Post.objects.all().delete()
-        response = self.client.get('posts:index')
-        self.assertEqual(response.content, content)
-        cache.clear()
-        response = self.client.get(reverse('posts:index'))
-        self.assertNotEqual(response.content, content)
 
 
 class FollowingViewsTest(TestCase):

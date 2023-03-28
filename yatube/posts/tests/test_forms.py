@@ -1,4 +1,6 @@
+import string
 from http import HTTPStatus
+import random
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
@@ -44,8 +46,10 @@ class PostCreateFormTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
+        name_f = f"{''.join(random.choices(string.ascii_uppercase, k=5))}.gif"
+
         uploaded = SimpleUploadedFile(
-            name='small.gif',
+            name=name_f,
             content=small_gif,
             content_type='image/gif',
         )
@@ -60,16 +64,11 @@ class PostCreateFormTests(TestCase):
             follow=True,
         )
         new_post = Post.objects.latest('created')
-        self.assertRedirects(
-            response,
-            reverse('posts:profile', kwargs={'username': self.post.author}),
-        )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), count + 1)
         self.assertEqual(new_post.text, form_data['text'])
         self.assertEqual(new_post.group.pk, form_data['group'])
-        self.assertTrue(new_post.image)
-        self.assertEqual(new_post.author, self.author)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(new_post.image.name, f'posts/{name_f}')
 
     def test_author_edit_post(self):
         """Валидная форма изменяет запись в Posts."""

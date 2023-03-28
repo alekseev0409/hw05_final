@@ -17,8 +17,7 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    # posts = Post.objects.select_related('author')
-    posts = group.posts.all()
+    posts = group.posts.select_related('author').all()
     page_obj = get_page(request, posts)
     context = {
         'group': group,
